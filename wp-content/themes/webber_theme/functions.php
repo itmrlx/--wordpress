@@ -65,9 +65,23 @@ add_filter('excerpt_more', 'new_excerpt_more');
 /* end */
 
 /* Webber logotype (enter admin page) */
-function login_logo_prosites(){
-	echo '<style type="text/css">h1 a{outline: none !important;box-shadow: none !important;background-image:url('.get_bloginfo('template_directory').'/img/webber-black.svg) !important;background-size: 150px 155px !important;width:150px !important;height:155px !important;}.wp-core-ui .button-primary{border:0;border-radius:0;}</style>';};
-add_action('login_head', 'login_logo_prosites');
+function login_logo_webber(){?>
+	<style type="text/css">
+		.login h1 a{
+			outline: none !important;
+			box-shadow: none !important;
+			background-image: url('<?php bloginfo('template_url'); ?>/img/webber-black.svg') !important;
+			background-size: 150px 155px !important;
+			width: 150px !important;
+			height: 155px !important;
+		}
+		.wp-core-ui .button-primary{
+			border: 0;
+			border-radius: 0;
+		}
+	</style>
+<?php };
+add_action('login_head', 'login_logo_webber');
 function my_custom_login_url(){return 'http://webber.by';}
 add_filter( 'login_headerurl', 'my_custom_login_url', 10, 4 );
 function login_header_title(){return 'Разработка и продвижение сайтов';}
