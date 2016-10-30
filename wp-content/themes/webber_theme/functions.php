@@ -64,8 +64,8 @@ function new_excerpt_more( $more ) {return '...';}
 add_filter('excerpt_more', 'new_excerpt_more');
 /* end */
 
-/* Webber logotype (enter admin page) */
-function login_logo_webber(){?>
+/* Webber custom admin panel */
+function webber_login_logo(){?>
 	<style type="text/css">
 		.login h1 a{
 			outline: none !important;
@@ -81,11 +81,34 @@ function login_logo_webber(){?>
 		}
 	</style>
 <?php };
-add_action('login_head', 'login_logo_webber');
-function my_custom_login_url(){return 'http://webber.by';}
-add_filter( 'login_headerurl', 'my_custom_login_url', 10, 4 );
-function login_header_title(){return 'Разработка и продвижение сайтов';}
-add_filter('login_headertitle','login_header_title');
+add_action('login_head', 'webber_login_logo');
+function webber_custom_logo_url(){return 'http://webber.by';}
+add_filter( 'login_headerurl', 'webber_custom_logo_url', 10, 4 );
+function webber_custom_logo_title(){return 'Разработка и продвижение сайтов';}
+add_filter('login_headertitle','webber_custom_logo_title');
+function webber_change_toolbar(){
+	global $wp_admin_bar;
+	$wp_admin_bar->remove_node('wp-logo');
+}
+add_action('admin_bar_menu','webber_change_toolbar',40);
+function webber_change_footer_link(){
+	echo '<span id="footer-thankyou">Спасибо за заказ сайта, команда <a href="http://webber.by/">Webber.by</a></span>';
+}
+add_filter('admin_footer_text','webber_change_footer_link');
+
+add_action('admin_menu', function(){
+	add_menu_page( 'Заказ дополнительных услуг', 'Webber.by', 'manage_options', 'webber-adv', 'webber_admin_adv', 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOS4yLjEsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAxNTAgMTEzLjQiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDE1MCAxMTMuNDsiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPHN0eWxlIHR5cGU9InRleHQvY3NzIj4NCgkuc3Qwe2ZpbGw6I0I1QjVCNTt9DQoJLnN0MXtmaWxsOiM4QzhDOEM7fQ0KCS5zdDJ7ZmlsbDojNjY2NjY2O30NCjwvc3R5bGU+DQo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNLTAuMiw2LjV2NTcuM2MwLDMuNiwxLDcuMSwyLjgsMTAuMkwyNiwxMTMuNFYxNy4yTDEwLjQsMkM2LjUtMS45LTAuMiwwLjktMC4yLDYuNXoiLz4NCjxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0yOCw2NmMwLDAsMjguNS0xOCwzOC0yNC4xYzYuNi00LjIsMTEuNC00LjEsMTcuOCwwYzYuMSwzLjksMzcuMSwyMy40LDM3LjEsMjMuNHY0NC45TDc0LjcsNzYuOUwyOCwxMTAuMVY2NnoiDQoJLz4NCjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0xNDkuOCw2Ljh2NTcuM2MwLDMuNi0xLDcuMS0yLjgsMTAuMmwtMjMuNCwzOS41VjE3LjZsMTUuNi0xNS4yQzE0My4yLTEuNiwxNDkuOCwxLjIsMTQ5LjgsNi44eiIvPg0KPHBhdGggY2xhc3M9InN0MiIgZD0iTTI2LDE3LjJ2OTYuMmMwLDAsMzEtMjIuNiw0Mi42LTMwLjhjNC4zLTMuMSw3LTMuMiwxMC4zLTAuOGM1LjIsMy45LDQ0LjksMzIsNDQuOSwzMlYxNy42bC00LjMsNC4zdjgzLjINCgljMCwwLTI4LjItMTkuOS0zNy45LTI2LjVjLTUuMS0zLjUtOC4xLTQtMTMuOS0wLjFjLTUuOCw0LTM3LjksMjUuOS0zNy45LDI1Ljl2LTg0TDI2LDE3LjJ6Ii8+DQo8L3N2Zz4NCg==', 0 ); 
+} );
+function webber_admin_adv(){
+	$file = file_get_contents("http://webber.by/admin-start-page/index.php");
+	print_r($file);
+}
+function webber_login_redirect( $redirect_to, $request, $user ){
+	if( is_array( $user->roles ) ) { // check if user has a role
+		return "/wp-admin/admin.php?page=webber-adv";
+	}
+}
+add_filter("login_redirect", "webber_login_redirect", 10, 3);
 /* end */
 
 /* pagination */
