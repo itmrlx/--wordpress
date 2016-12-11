@@ -1,0 +1,470 @@
+<html>
+      <head>
+        <meta charset="UTF-8">
+        <title>README.md</title>
+      </head>
+      <body>
+        <h2 id="php-css-parser">PHP CSS Parser</h2>
+<p><a href="https://travis-ci.org/sabberworm/PHP-CSS-Parser"><img src="https://travis-ci.org/sabberworm/PHP-CSS-Parser.png" alt="build status"></a> <a href="http://hhvm.h4cc.de/package/sabberworm/php-css-parser"><img src="http://hhvm.h4cc.de/badge/sabberworm/php-css-parser.png" alt="HHVM Status"></a></p>
+<p>A Parser for CSS Files written in PHP. Allows extraction of CSS files into a data structure, manipulation of said structure and output as (optimized) CSS.</p>
+<h2 id="usage">Usage</h2>
+<h3 id="installation-using-composer">Installation using composer</h3>
+<p>Add php-css-parser to your composer.json</p>
+<pre><code>{
+    &quot;require&quot;: {
+        &quot;sabberworm/php-css-parser&quot;: &quot;*&quot;
+    }
+}
+</code></pre><h3 id="extraction">Extraction</h3>
+<p>To use the CSS Parser, create a new instance. The constructor takes the following form:</p>
+<pre><code>new Sabberworm\CSS\Parser($sText);
+</code></pre><p>To read a file, for example, you’d do the following:</p>
+<pre><code>$oCssParser = new Sabberworm\CSS\Parser(file_get_contents(&#39;somefile.css&#39;));
+$oCssDocument = $oCssParser-&gt;parse();
+</code></pre><p>The resulting CSS document structure can be manipulated prior to being output.</p>
+<h3 id="options">Options</h3>
+<h4 id="charset">Charset</h4>
+<p>The charset option is used only if no @charset declaration is found in the CSS file. UTF-8 is the default, so you won’t have to create a settings object at all if you don’t intend to change that.</p>
+<pre><code>$oSettings = Sabberworm\CSS\Settings::create()-&gt;withDefaultCharset(&#39;windows-1252&#39;);
+new Sabberworm\CSS\Parser($sText, $oSettings);
+</code></pre><h4 id="strict-parsing">Strict parsing</h4>
+<p>To have the parser choke on invalid rules, supply a thusly configured Sabberworm\CSS\Settings object:</p>
+<pre><code>$oCssParser = new Sabberworm\CSS\Parser(file_get_contents(&#39;somefile.css&#39;), Sabberworm\CSS\Settings::create()-&gt;beStrict());
+</code></pre><h4 id="disable-multibyte-functions">Disable multibyte functions</h4>
+<p>To achieve faster parsing, you can choose to have PHP-CSS-Parser use regular string functions instead of <code>mb_*</code> functions. This should work fine in most cases, even for UTF-8 files, as all the multibyte characters are in string literals. Still it’s not recommended to use this with input you have no control over as it’s not thoroughly covered by test cases.</p>
+<pre><code>$oSettings = Sabberworm\CSS\Settings::create()-&gt;withMultibyteSupport(false);
+new Sabberworm\CSS\Parser($sText, $oSettings);
+</code></pre><h3 id="manipulation">Manipulation</h3>
+<p>The resulting data structure consists mainly of five basic types: <code>CSSList</code>, <code>RuleSet</code>, <code>Rule</code>, <code>Selector</code> and <code>Value</code>. There are two additional types used: <code>Import</code> and <code>Charset</code> which you won’t use often.</p>
+<h4 id="csslist">CSSList</h4>
+<p><code>CSSList</code> represents a generic CSS container, most likely containing declaration blocks (rule sets with a selector) but it may also contain at-rules, charset declarations, etc. <code>CSSList</code> has the following concrete subtypes:</p>
+<ul>
+<li><code>Document</code> – representing the root of a CSS file.</li>
+<li><code>MediaQuery</code> – represents a subsection of a CSSList that only applies to a output device matching the contained media query.</li>
+</ul>
+<p>To access the items stored in a <code>CSSList</code> – like the document you got back when calling <code>$oCssParser-&gt;parse()</code> –, use <code>getContents()</code>, then iterate over that collection and use instanceof to check whether you’re dealing with another <code>CSSList</code>, a <code>RuleSet</code>, a <code>Import</code> or a <code>Charset</code>.</p>
+<p>To append a new item (selector, media query, etc.) to an existing <code>CSSList</code>, construct it using the constructor for this class and use the <code>append($oItem)</code> method.</p>
+<h4 id="ruleset">RuleSet</h4>
+<p><code>RuleSet</code> is a container for individual rules. The most common form of a rule set is one constrained by a selector. The following concrete subtypes exist:</p>
+<ul>
+<li><code>AtRuleSet</code> – for generic at-rules which do not match the ones specifically mentioned like @import, @charset or @media. A common example for this is @font-face.</li>
+<li><code>DeclarationBlock</code> – a RuleSet constrained by a <code>Selector</code>; contains an array of selector objects (comma-separated in the CSS) as well as the rules to be applied to the matching elements.</li>
+</ul>
+<p>Note: A <code>CSSList</code> can contain other <code>CSSList</code>s (and <code>Import</code>s as well as a <code>Charset</code>) while a <code>RuleSet</code> can only contain <code>Rule</code>s.</p>
+<p>If you want to manipulate a <code>RuleSet</code>, use the methods <code>addRule(Rule $oRule)</code>, <code>getRules()</code> and <code>removeRule($mRule)</code> (which accepts either a Rule instance or a rule name; optionally suffixed by a dash to remove all related rules).</p>
+<h4 id="rule">Rule</h4>
+<p><code>Rule</code>s just have a key (the rule) and a value. These values are all instances of a <code>Value</code>.</p>
+<h4 id="value">Value</h4>
+<p><code>Value</code> is an abstract class that only defines the <code>render</code> method. The concrete subclasses for atomic value types are:</p>
+<ul>
+<li><code>Size</code> – consists of a numeric <code>size</code> value and a unit.</li>
+<li><code>Color</code> – colors can be input in the form #rrggbb, #rgb or schema(val1, val2, …) but are always stored as an array of (&#39;s&#39; =&gt; val1, &#39;c&#39; =&gt; val2, &#39;h&#39; =&gt; val3, …) and output in the second form.</li>
+<li><code>CSSString</code> – this is just a wrapper for quoted strings to distinguish them from keywords; always output with double quotes.</li>
+<li><code>URL</code> – URLs in CSS; always output in URL(&quot;&quot;) notation.</li>
+</ul>
+<p>There is another abstract subclass of <code>Value</code>, <code>ValueList</code>. A <code>ValueList</code> represents a lists of <code>Value</code>s, separated by some separation character (mostly <code>,</code>, whitespace, or <code>/</code>). There are two types of <code>ValueList</code>s:</p>
+<ul>
+<li><code>RuleValueList</code> – The default type, used to represent all multi-valued rules like <code>font: bold 12px/3 Helvetica, Verdana, sans-serif;</code> (where the value would be a whitespace-separated list of the primitive value <code>bold</code>, a slash-separated list and a comma-separated list).</li>
+<li><code>CSSFunction</code> – A special kind of value that also contains a function name and where the values are the function’s arguments. Also handles equals-sign-separated argument lists like <code>filter: alpha(opacity=90);</code>.</li>
+</ul>
+<h4 id="convenience-methods">Convenience methods</h4>
+<p>There are a few convenience methods on Document to ease finding, manipulating and deleting rules:</p>
+<ul>
+<li><code>getAllDeclarationBlocks()</code> – does what it says; no matter how deeply nested your selectors are. Aliased as <code>getAllSelectors()</code>.</li>
+<li><code>getAllRuleSets()</code> – does what it says; no matter how deeply nested your rule sets are.</li>
+<li><code>getAllValues()</code> – finds all <code>Value</code> objects inside <code>Rule</code>s.</li>
+</ul>
+<h2 id="to-do">To-Do</h2>
+<ul>
+<li>More convenience methods [like <code>selectorsWithElement($sId/Class/TagName)</code>, <code>attributesOfType($sType)</code>, <code>removeAttributesOfType($sType)</code>]</li>
+<li>Real multibyte support. Currently only multibyte charsets whose first 255 code points take up only one byte and are identical with ASCII are supported (yes, UTF-8 fits this description).</li>
+<li>Named color support (using <code>Color</code> instead of an anonymous string literal)</li>
+</ul>
+<h2 id="use-cases">Use cases</h2>
+<h3 id="use-parser-to-prepend-an-id-to-all-selectors">Use <code>Parser</code> to prepend an id to all selectors</h3>
+<pre><code>$sMyId = &quot;#my_id&quot;;
+$oParser = new Sabberworm\CSS\Parser($sText);
+$oCss = $oParser-&gt;parse();
+foreach($oCss-&gt;getAllDeclarationBlocks() as $oBlock) {
+    foreach($oBlock-&gt;getSelectors() as $oSelector) {
+        //Loop over all selector parts (the comma-separated strings in a selector) and prepend the id
+        $oSelector-&gt;setSelector($sMyId.&#39; &#39;.$oSelector-&gt;getSelector());
+    }
+}
+</code></pre><h3 id="shrink-all-absolute-sizes-to-half">Shrink all absolute sizes to half</h3>
+<pre><code>$oParser = new Sabberworm\CSS\Parser($sText);
+$oCss = $oParser-&gt;parse();
+foreach($oCss-&gt;getAllValues() as $mValue) {
+    if($mValue instanceof CSSSize &amp;&amp; !$mValue-&gt;isRelative()) {
+        $mValue-&gt;setSize($mValue-&gt;getSize()/2);
+    }
+}
+</code></pre><h3 id="remove-unwanted-rules">Remove unwanted rules</h3>
+<pre><code>$oParser = new Sabberworm\CSS\Parser($sText);
+$oCss = $oParser-&gt;parse();
+foreach($oCss-&gt;getAllRuleSets() as $oRuleSet) {
+    $oRuleSet-&gt;removeRule(&#39;font-&#39;); //Note that the added dash will make this remove all rules starting with font- (like font-size, font-weight, etc.) as well as a potential font-rule
+    $oRuleSet-&gt;removeRule(&#39;cursor&#39;);
+}
+</code></pre><h3 id="output">Output</h3>
+<p>To output the entire CSS document into a variable, just use <code>-&gt;render()</code>:</p>
+<pre><code>$oCssParser = new Sabberworm\CSS\Parser(file_get_contents(&#39;somefile.css&#39;));
+$oCssDocument = $oCssParser-&gt;parse();
+print $oCssDocument-&gt;render();
+</code></pre><p>If you want to format the output, pass an instance of type <code>Sabberworm\CSS\OutputFormat</code>:</p>
+<pre><code>$oFormat = Sabberworm\CSS\OutputFormat::create()-&gt;indentWithSpaces(4)-&gt;setSpaceBetweenRules(&quot;\n&quot;);
+print $oCssDocument-&gt;render($oFormat);
+</code></pre><p>Or use one of the predefined formats:</p>
+<pre><code>print $oCssDocument-&gt;render(Sabberworm\CSS\OutputFormat::createPretty());
+print $oCssDocument-&gt;render(Sabberworm\CSS\OutputFormat::createCompact());
+</code></pre><p>To see what you can do with output formatting, look at the tests in <code>tests/Sabberworm/CSS/OutputFormatTest.php</code>.</p>
+<h2 id="examples">Examples</h2>
+<h3 id="example-1-at-rules-">Example 1 (At-Rules)</h3>
+<h4 id="input">Input</h4>
+<pre><code>@charset &quot;utf-8&quot;;
+
+@font-face {
+  font-family: &quot;CrassRoots&quot;;
+  src: url(&quot;../media/cr.ttf&quot;)
+}
+
+html, body {
+    font-size: 1.6em
+}
+
+@keyframes mymove {
+    from { top: 0px; }
+    to { top: 200px; }
+}
+</code></pre><h4 id="structure-var_dump-">Structure (<code>var_dump()</code>)</h4>
+<pre><code>object(Sabberworm\CSS\CSSList\Document)#4 (1) {
+  [&quot;aContents&quot;:protected]=&gt;
+  array(4) {
+    [0]=&gt;
+    object(Sabberworm\CSS\Property\Charset)#6 (1) {
+      [&quot;sCharset&quot;:&quot;Sabberworm\CSS\Property\Charset&quot;:private]=&gt;
+      object(Sabberworm\CSS\Value\CSSString)#5 (1) {
+        [&quot;sString&quot;:&quot;Sabberworm\CSS\Value\CSSString&quot;:private]=&gt;
+        string(5) &quot;utf-8&quot;
+      }
+    }
+    [1]=&gt;
+    object(Sabberworm\CSS\RuleSet\AtRuleSet)#7 (2) {
+      [&quot;sType&quot;:&quot;Sabberworm\CSS\RuleSet\AtRuleSet&quot;:private]=&gt;
+      string(9) &quot;font-face&quot;
+      [&quot;aRules&quot;:&quot;Sabberworm\CSS\RuleSet\RuleSet&quot;:private]=&gt;
+      array(2) {
+        [&quot;font-family&quot;]=&gt;
+        array(1) {
+          [0]=&gt;
+          object(Sabberworm\CSS\Rule\Rule)#8 (3) {
+            [&quot;sRule&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            string(11) &quot;font-family&quot;
+            [&quot;mValue&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            object(Sabberworm\CSS\Value\CSSString)#9 (1) {
+              [&quot;sString&quot;:&quot;Sabberworm\CSS\Value\CSSString&quot;:private]=&gt;
+              string(10) &quot;CrassRoots&quot;
+            }
+            [&quot;bIsImportant&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            bool(false)
+          }
+        }
+        [&quot;src&quot;]=&gt;
+        array(1) {
+          [0]=&gt;
+          object(Sabberworm\CSS\Rule\Rule)#10 (3) {
+            [&quot;sRule&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            string(3) &quot;src&quot;
+            [&quot;mValue&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            object(Sabberworm\CSS\Value\URL)#11 (1) {
+              [&quot;oURL&quot;:&quot;Sabberworm\CSS\Value\URL&quot;:private]=&gt;
+              object(Sabberworm\CSS\Value\CSSString)#12 (1) {
+                [&quot;sString&quot;:&quot;Sabberworm\CSS\Value\CSSString&quot;:private]=&gt;
+                string(15) &quot;../media/cr.ttf&quot;
+              }
+            }
+            [&quot;bIsImportant&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            bool(false)
+          }
+        }
+      }
+    }
+    [2]=&gt;
+    object(Sabberworm\CSS\RuleSet\DeclarationBlock)#13 (2) {
+      [&quot;aSelectors&quot;:&quot;Sabberworm\CSS\RuleSet\DeclarationBlock&quot;:private]=&gt;
+      array(2) {
+        [0]=&gt;
+        object(Sabberworm\CSS\Property\Selector)#14 (2) {
+          [&quot;sSelector&quot;:&quot;Sabberworm\CSS\Property\Selector&quot;:private]=&gt;
+          string(4) &quot;html&quot;
+          [&quot;iSpecificity&quot;:&quot;Sabberworm\CSS\Property\Selector&quot;:private]=&gt;
+          NULL
+        }
+        [1]=&gt;
+        object(Sabberworm\CSS\Property\Selector)#15 (2) {
+          [&quot;sSelector&quot;:&quot;Sabberworm\CSS\Property\Selector&quot;:private]=&gt;
+          string(4) &quot;body&quot;
+          [&quot;iSpecificity&quot;:&quot;Sabberworm\CSS\Property\Selector&quot;:private]=&gt;
+          NULL
+        }
+      }
+      [&quot;aRules&quot;:&quot;Sabberworm\CSS\RuleSet\RuleSet&quot;:private]=&gt;
+      array(1) {
+        [&quot;font-size&quot;]=&gt;
+        array(1) {
+          [0]=&gt;
+          object(Sabberworm\CSS\Rule\Rule)#16 (3) {
+            [&quot;sRule&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            string(9) &quot;font-size&quot;
+            [&quot;mValue&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            object(Sabberworm\CSS\Value\Size)#17 (3) {
+              [&quot;fSize&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+              float(1.6)
+              [&quot;sUnit&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+              string(2) &quot;em&quot;
+              [&quot;bIsColorComponent&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+              bool(false)
+            }
+            [&quot;bIsImportant&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            bool(false)
+          }
+        }
+      }
+    }
+    [3]=&gt;
+    object(Sabberworm\CSS\CSSList\KeyFrame)#18 (3) {
+      [&quot;vendorKeyFrame&quot;:&quot;Sabberworm\CSS\CSSList\KeyFrame&quot;:private]=&gt;
+      string(9) &quot;keyframes&quot;
+      [&quot;animationName&quot;:&quot;Sabberworm\CSS\CSSList\KeyFrame&quot;:private]=&gt;
+      string(6) &quot;mymove&quot;
+      [&quot;aContents&quot;:protected]=&gt;
+      array(2) {
+        [0]=&gt;
+        object(Sabberworm\CSS\RuleSet\DeclarationBlock)#19 (2) {
+          [&quot;aSelectors&quot;:&quot;Sabberworm\CSS\RuleSet\DeclarationBlock&quot;:private]=&gt;
+          array(1) {
+            [0]=&gt;
+            object(Sabberworm\CSS\Property\Selector)#20 (2) {
+              [&quot;sSelector&quot;:&quot;Sabberworm\CSS\Property\Selector&quot;:private]=&gt;
+              string(4) &quot;from&quot;
+              [&quot;iSpecificity&quot;:&quot;Sabberworm\CSS\Property\Selector&quot;:private]=&gt;
+              NULL
+            }
+          }
+          [&quot;aRules&quot;:&quot;Sabberworm\CSS\RuleSet\RuleSet&quot;:private]=&gt;
+          array(1) {
+            [&quot;top&quot;]=&gt;
+            array(1) {
+              [0]=&gt;
+              object(Sabberworm\CSS\Rule\Rule)#21 (3) {
+                [&quot;sRule&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+                string(3) &quot;top&quot;
+                [&quot;mValue&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+                object(Sabberworm\CSS\Value\Size)#22 (3) {
+                  [&quot;fSize&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  float(0)
+                  [&quot;sUnit&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  string(2) &quot;px&quot;
+                  [&quot;bIsColorComponent&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  bool(false)
+                }
+                [&quot;bIsImportant&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+                bool(false)
+              }
+            }
+          }
+        }
+        [1]=&gt;
+        object(Sabberworm\CSS\RuleSet\DeclarationBlock)#23 (2) {
+          [&quot;aSelectors&quot;:&quot;Sabberworm\CSS\RuleSet\DeclarationBlock&quot;:private]=&gt;
+          array(1) {
+            [0]=&gt;
+            object(Sabberworm\CSS\Property\Selector)#24 (2) {
+              [&quot;sSelector&quot;:&quot;Sabberworm\CSS\Property\Selector&quot;:private]=&gt;
+              string(2) &quot;to&quot;
+              [&quot;iSpecificity&quot;:&quot;Sabberworm\CSS\Property\Selector&quot;:private]=&gt;
+              NULL
+            }
+          }
+          [&quot;aRules&quot;:&quot;Sabberworm\CSS\RuleSet\RuleSet&quot;:private]=&gt;
+          array(1) {
+            [&quot;top&quot;]=&gt;
+            array(1) {
+              [0]=&gt;
+              object(Sabberworm\CSS\Rule\Rule)#25 (3) {
+                [&quot;sRule&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+                string(3) &quot;top&quot;
+                [&quot;mValue&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+                object(Sabberworm\CSS\Value\Size)#26 (3) {
+                  [&quot;fSize&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  float(200)
+                  [&quot;sUnit&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  string(2) &quot;px&quot;
+                  [&quot;bIsColorComponent&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  bool(false)
+                }
+                [&quot;bIsImportant&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+                bool(false)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre><h4 id="output-render-">Output (<code>render()</code>)</h4>
+<pre><code>@charset &quot;utf-8&quot;;@font-face {font-family: &quot;CrassRoots&quot;;src: url(&quot;../media/cr.ttf&quot;);}html, body {font-size: 1.6em;}
+@keyframes mymove {from {top: 0px;}
+to {top: 200px;}
+}
+</code></pre><h3 id="example-2-values-">Example 2 (Values)</h3>
+<h4 id="input">Input</h4>
+<pre><code>#header {
+    margin: 10px 2em 1cm 2%;
+    font-family: Verdana, Helvetica, &quot;Gill Sans&quot;, sans-serif;
+    color: red !important;
+}
+</code></pre><h4 id="structure-var_dump-">Structure (<code>var_dump()</code>)</h4>
+<pre><code>object(Sabberworm\CSS\CSSList\Document)#4 (1) {
+  [&quot;aContents&quot;:protected]=&gt;
+  array(1) {
+    [0]=&gt;
+    object(Sabberworm\CSS\RuleSet\DeclarationBlock)#5 (2) {
+      [&quot;aSelectors&quot;:&quot;Sabberworm\CSS\RuleSet\DeclarationBlock&quot;:private]=&gt;
+      array(1) {
+        [0]=&gt;
+        object(Sabberworm\CSS\Property\Selector)#6 (2) {
+          [&quot;sSelector&quot;:&quot;Sabberworm\CSS\Property\Selector&quot;:private]=&gt;
+          string(7) &quot;#header&quot;
+          [&quot;iSpecificity&quot;:&quot;Sabberworm\CSS\Property\Selector&quot;:private]=&gt;
+          NULL
+        }
+      }
+      [&quot;aRules&quot;:&quot;Sabberworm\CSS\RuleSet\RuleSet&quot;:private]=&gt;
+      array(3) {
+        [&quot;margin&quot;]=&gt;
+        array(1) {
+          [0]=&gt;
+          object(Sabberworm\CSS\Rule\Rule)#7 (3) {
+            [&quot;sRule&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            string(6) &quot;margin&quot;
+            [&quot;mValue&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            object(Sabberworm\CSS\Value\RuleValueList)#12 (2) {
+              [&quot;aComponents&quot;:protected]=&gt;
+              array(4) {
+                [0]=&gt;
+                object(Sabberworm\CSS\Value\Size)#8 (3) {
+                  [&quot;fSize&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  float(10)
+                  [&quot;sUnit&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  string(2) &quot;px&quot;
+                  [&quot;bIsColorComponent&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  bool(false)
+                }
+                [1]=&gt;
+                object(Sabberworm\CSS\Value\Size)#9 (3) {
+                  [&quot;fSize&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  float(2)
+                  [&quot;sUnit&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  string(2) &quot;em&quot;
+                  [&quot;bIsColorComponent&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  bool(false)
+                }
+                [2]=&gt;
+                object(Sabberworm\CSS\Value\Size)#10 (3) {
+                  [&quot;fSize&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  float(1)
+                  [&quot;sUnit&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  string(2) &quot;cm&quot;
+                  [&quot;bIsColorComponent&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  bool(false)
+                }
+                [3]=&gt;
+                object(Sabberworm\CSS\Value\Size)#11 (3) {
+                  [&quot;fSize&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  float(2)
+                  [&quot;sUnit&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  string(1) &quot;%&quot;
+                  [&quot;bIsColorComponent&quot;:&quot;Sabberworm\CSS\Value\Size&quot;:private]=&gt;
+                  bool(false)
+                }
+              }
+              [&quot;sSeparator&quot;:protected]=&gt;
+              string(1) &quot; &quot;
+            }
+            [&quot;bIsImportant&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            bool(false)
+          }
+        }
+        [&quot;font-family&quot;]=&gt;
+        array(1) {
+          [0]=&gt;
+          object(Sabberworm\CSS\Rule\Rule)#13 (3) {
+            [&quot;sRule&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            string(11) &quot;font-family&quot;
+            [&quot;mValue&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            object(Sabberworm\CSS\Value\RuleValueList)#15 (2) {
+              [&quot;aComponents&quot;:protected]=&gt;
+              array(4) {
+                [0]=&gt;
+                string(7) &quot;Verdana&quot;
+                [1]=&gt;
+                string(9) &quot;Helvetica&quot;
+                [2]=&gt;
+                object(Sabberworm\CSS\Value\CSSString)#14 (1) {
+                  [&quot;sString&quot;:&quot;Sabberworm\CSS\Value\CSSString&quot;:private]=&gt;
+                  string(9) &quot;Gill Sans&quot;
+                }
+                [3]=&gt;
+                string(10) &quot;sans-serif&quot;
+              }
+              [&quot;sSeparator&quot;:protected]=&gt;
+              string(1) &quot;,&quot;
+            }
+            [&quot;bIsImportant&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            bool(false)
+          }
+        }
+        [&quot;color&quot;]=&gt;
+        array(1) {
+          [0]=&gt;
+          object(Sabberworm\CSS\Rule\Rule)#16 (3) {
+            [&quot;sRule&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            string(5) &quot;color&quot;
+            [&quot;mValue&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            string(3) &quot;red&quot;
+            [&quot;bIsImportant&quot;:&quot;Sabberworm\CSS\Rule\Rule&quot;:private]=&gt;
+            bool(true)
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre><h4 id="output-render-">Output (<code>render()</code>)</h4>
+<pre><code>#header {margin: 10px 2em 1cm 2%;font-family: Verdana,Helvetica,&quot;Gill Sans&quot;,sans-serif;color: red !important;}
+</code></pre><h2 id="contributors-thanks-to">Contributors/Thanks to</h2>
+<ul>
+<li><a href="https://github.com/ju1ius">ju1ius</a> for the specificity parsing code and the ability to expand/compact shorthand properties.</li>
+<li><a href="https://github.com/GaryJones">GaryJones</a> for lots of input and <a href="http://css-specificity.info/">http://css-specificity.info/</a>.</li>
+<li><a href="https://github.com/docteurklein">docteurklein</a> for output formatting and <code>CSSList-&gt;remove()</code> inspiration.</li>
+<li><a href="https://github.com/nicolopignatelli">nicolopignatelli</a> for PSR-0 compatibility.</li>
+<li><a href="https://github.com/diegoembarcadero">diegoembarcadero</a> for keyframe at-rule parsing.</li>
+<li><a href="https://github.com/goetas">goetas</a> for @namespace at-rule support.</li>
+<li><a href="https://github.com/sabberworm/PHP-CSS-Parser/contributors">View full list</a></li>
+</ul>
+<h2 id="misc">Misc</h2>
+<ul>
+<li>Legacy Support: The latest pre-PSR-0 version of this project can be checked with the <code>0.9.0</code> tag.</li>
+<li>Running Tests: To run all unit tests for this project, have <code>phpunit</code> installed and run <code>phpunit .</code>.</li>
+</ul>
+<h2 id="license">License</h2>
+<p>PHP-CSS-Parser is freely distributable under the terms of an MIT-style license.</p>
+<p>Copyright (c) 2011 Raphael Schweikert, <a href="http://sabberworm.com/">http://sabberworm.com/</a></p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+
+      </body>
+    </html>

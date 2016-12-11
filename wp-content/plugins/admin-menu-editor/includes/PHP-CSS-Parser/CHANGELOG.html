@@ -1,0 +1,169 @@
+<html>
+      <head>
+        <meta charset="UTF-8">
+        <title>CHANGELOG.md</title>
+      </head>
+      <body>
+        <h1 id="revision-history">Revision History</h1>
+<h2 id="7-0">7.0</h2>
+<h3 id="7-0-0-2015-08-24-">7.0.0 (2015-08-24)</h3>
+<ul>
+<li>Compatibility with PHP 7. Well timed, eh?</li>
+</ul>
+<h4 id="deprecations">Deprecations</h4>
+<ul>
+<li>The <code>Sabberworm\CSS\Value\String</code> class has been renamed to <code>Sabberworm\CSS\Value\CSSString</code>.</li>
+</ul>
+<h3 id="7-0-1-2015-12-25-">7.0.1 (2015-12-25)</h3>
+<ul>
+<li>No more suppressed <code>E_NOTICE</code></li>
+<li><em>No deprecations</em></li>
+</ul>
+<h2 id="6-0">6.0</h2>
+<h3 id="6-0-0-2014-07-03-">6.0.0 (2014-07-03)</h3>
+<ul>
+<li>Format output using Sabberworm\CSS\OutputFormat</li>
+<li><em>No backwards-incompatible changes</em></li>
+</ul>
+<h4 id="deprecations">Deprecations</h4>
+<ul>
+<li>The parse() method replaces __toString with an optional argument (instance of the OutputFormat class)</li>
+</ul>
+<h3 id="6-0-1-2015-08-24-">6.0.1 (2015-08-24)</h3>
+<ul>
+<li>Remove some declarations in interfaces incompatible with PHP 5.3 (&lt; 5.3.9)</li>
+<li><em>No deprecations</em></li>
+</ul>
+<h2 id="5-0">5.0</h2>
+<h3 id="5-0-0-2013-03-20-">5.0.0 (2013-03-20)</h3>
+<ul>
+<li>Correctly parse all known CSS 3 units (including Hz and kHz).</li>
+<li>Output RGB colors in short (#aaa or #ababab) notation</li>
+<li>Be case-insensitive when parsing identifiers.</li>
+<li><em>No deprecations</em></li>
+</ul>
+<h4 id="backwards-incompatible-changes">Backwards-incompatible changes</h4>
+<ul>
+<li><code>Sabberworm\CSS\Value\Color</code>’s <code>__toString</code> method overrides <code>CSSList</code>’s to maybe return something other than <code>type(value, …)</code> (see above).</li>
+</ul>
+<h3 id="5-0-1-2013-03-20-">5.0.1 (2013-03-20)</h3>
+<ul>
+<li>Internal cleanup</li>
+<li><em>No backwards-incompatible changes</em></li>
+<li><em>No deprecations</em></li>
+</ul>
+<h3 id="5-0-2-2013-03-21-">5.0.2 (2013-03-21)</h3>
+<ul>
+<li>CHANGELOG.md file added to distribution</li>
+<li><em>No backwards-incompatible changes</em></li>
+<li><em>No deprecations</em></li>
+</ul>
+<h3 id="5-0-3-2013-03-21-">5.0.3 (2013-03-21)</h3>
+<ul>
+<li>More size units recognized</li>
+<li><em>No backwards-incompatible changes</em></li>
+<li><em>No deprecations</em></li>
+</ul>
+<h3 id="5-0-4-2013-03-21-">5.0.4 (2013-03-21)</h3>
+<ul>
+<li>Don’t output floats with locale-aware separator chars</li>
+<li><em>No backwards-incompatible changes</em></li>
+<li><em>No deprecations</em></li>
+</ul>
+<h3 id="5-0-5-2013-04-17-">5.0.5 (2013-04-17)</h3>
+<ul>
+<li>Initial support for lenient parsing (setting this parser option will catch some exceptions internally and recover the parser’s state as neatly as possible).</li>
+<li><em>No backwards-incompatible changes</em></li>
+<li><em>No deprecations</em></li>
+</ul>
+<h3 id="5-0-6-2013-05-31-">5.0.6 (2013-05-31)</h3>
+<ul>
+<li>Fix broken unit test</li>
+<li><em>No backwards-incompatible changes</em></li>
+<li><em>No deprecations</em></li>
+</ul>
+<h3 id="5-0-7-2013-08-04-">5.0.7 (2013-08-04)</h3>
+<ul>
+<li>Fix broken decimal point output optimization</li>
+<li><em>No backwards-incompatible changes</em></li>
+<li><em>No deprecations</em></li>
+</ul>
+<h3 id="5-0-8-2013-08-15-">5.0.8 (2013-08-15)</h3>
+<ul>
+<li>Make default settings’ multibyte parsing option dependent on whether or not the mbstring extension is actually installed.</li>
+<li><em>No backwards-incompatible changes</em></li>
+<li><em>No deprecations</em></li>
+</ul>
+<h3 id="5-1-0-2013-10-24-">5.1.0 (2013-10-24)</h3>
+<ul>
+<li>Performance enhancements by Michael M Slusarz</li>
+<li>More rescue entry points for lenient parsing (unexpected tokens between declaration blocks and unclosed comments)</li>
+<li><em>No backwards-incompatible changes</em></li>
+<li><em>No deprecations</em></li>
+</ul>
+<h3 id="5-1-1-2013-10-28-">5.1.1 (2013-10-28)</h3>
+<ul>
+<li>Updated CHANGELOG.md to reflect changes since 5.0.4</li>
+<li><em>No backwards-incompatible changes</em></li>
+<li><em>No deprecations</em></li>
+</ul>
+<h3 id="5-1-2-2013-10-30-">5.1.2 (2013-10-30)</h3>
+<ul>
+<li>Remove the use of consumeUntil in comment parsing. This makes it possible to parse comments such as “/<strong> Perfectly valid </strong>/”</li>
+<li><em>No backwards-incompatible changes</em></li>
+<li><em>No deprecations</em></li>
+</ul>
+<h3 id="5-2-0-2014-06-30-">5.2.0 (2014-06-30)</h3>
+<ul>
+<li>Support removing a selector from a declaration block using <code>$oBlock-&gt;removeSelector($mSelector)</code></li>
+<li><p>Introduce a specialized exception (Sabberworm\CSS\Parsing\OuputException) for exceptions during output rendering</p>
+</li>
+<li><p><em>No deprecations</em></p>
+</li>
+</ul>
+<h4 id="backwards-incompatible-changes">Backwards-incompatible changes</h4>
+<ul>
+<li>Outputting a declaration block that has no selectors throws an OuputException instead of outputting an invalid <code>{…}</code> into the CSS document.</li>
+</ul>
+<h2 id="4-0">4.0</h2>
+<h3 id="4-0-0-2013-03-19-">4.0.0 (2013-03-19)</h3>
+<ul>
+<li>Support for more @-rules</li>
+<li>Generic interface <code>Sabberworm\CSS\Property\AtRule</code>, implemented by all @-rule classes</li>
+<li><em>No deprecations</em></li>
+</ul>
+<h4 id="backwards-incompatible-changes">Backwards-incompatible changes</h4>
+<ul>
+<li><code>Sabberworm\CSS\RuleSet\AtRule</code> renamed to <code>Sabberworm\CSS\RuleSet\AtRuleSet</code></li>
+<li><code>Sabberworm\CSS\CSSList\MediaQuery</code> renamed to <code>Sabberworm\CSS\RuleSet\CSSList\AtRuleBlockList</code> with differing semantics and API (which also works for other block-list-based @-rules like <code>@supports</code>).</li>
+</ul>
+<h2 id="3-0">3.0</h2>
+<h3 id="3-0-0-2013-03-06-">3.0.0 (2013-03-06)</h3>
+<ul>
+<li>Support for lenient parsing (on by default)</li>
+<li><em>No deprecations</em></li>
+</ul>
+<h4 id="backwards-incompatible-changes">Backwards-incompatible changes</h4>
+<ul>
+<li>All properties (like whether or not to use <code>mb_</code>-functions, which default charset to use and – new – whether or not to be forgiving when parsing) are now encapsulated in an instance of <code>Sabberworm\CSS\Settings</code> which can be passed as the second argument to <code>Sabberworm\CSS\Parser-&gt;__construct()</code>.</li>
+<li>Specifying a charset as the second argument to <code>Sabberworm\CSS\Parser-&gt;__construct()</code> is no longer supported. Use <code>Sabberworm\CSS\Settings::create()-&gt;withDefaultCharset(&#39;some-charset&#39;)</code> instead.</li>
+<li>Setting <code>Sabberworm\CSS\Parser-&gt;bUseMbFunctions</code> has no effect. Use <code>Sabberworm\CSS\Settings::create()-&gt;withMultibyteSupport(true/false)</code> instead.</li>
+<li><code>Sabberworm\CSS\Parser-&gt;parse()</code> may throw a <code>Sabberworm\CSS\Parsing\UnexpectedTokenException</code> when in strict parsing mode.</li>
+</ul>
+<h2 id="2-0">2.0</h2>
+<h3 id="2-0-0-2013-01-29-">2.0.0 (2013-01-29)</h3>
+<ul>
+<li>Allow multiple rules of the same type per rule set</li>
+</ul>
+<h4 id="backwards-incompatible-changes">Backwards-incompatible changes</h4>
+<ul>
+<li><code>Sabberworm\CSS\RuleSet-&gt;getRules()</code> returns an index-based array instead of an associative array. Use <code>Sabberworm\CSS\RuleSet-&gt;getRulesAssoc()</code> (which eliminates duplicate rules and lets the later rule of the same name win).</li>
+<li><code>Sabberworm\CSS\RuleSet-&gt;removeRule()</code> works as it did before except when passed an instance of <code>Sabberworm\CSS\Rule\Rule</code>, in which case it would only remove the exact rule given instead of all the rules of the same type. To get the old behaviour, use <code>Sabberworm\CSS\RuleSet-&gt;removeRule($oRule-&gt;getRule()</code>;</li>
+</ul>
+<h2 id="1-0">1.0</h2>
+<p>Initial release of a stable public API.</p>
+<h2 id="0-9">0.9</h2>
+<p>Last version not to use PSR-0 project organization semantics.</p>
+
+      </body>
+    </html>
